@@ -1,19 +1,86 @@
+const {hash , compare} = require('bcryptjs');
+
+
 const AppError = require('../utils/AppError');
+
+const sqliteConnection = require('../database/sqlite');
+
 
 
 
 class UserController {
 
-    create(request,response){
+   async create(request,response){
 
         const {name , email , password} = request.body;
+         
+        const database = await sqliteConnection()
+        
+        const checkUserExist = await database.get("SELECT * FROM users WHERE email = (?)", [email]);
 
-        response.json({name , email , password});
+        if(checkUserExist){
+            throw new AppError('This email already exist')
+        }
+        
+        const hashedPassword = await hash(password , 8)
+        await  database.run("INSERT INTO users (name ,email, password) VALUES (?,?,?)" , [name , email , hashedPassword]);
+
+
+
+        return response.status(201).json();
 
 
     }
 
+async update(request,response){
+    const {name , email , password , old_password} = request.body;
+    const {id} = request.params;
 
+
+    const database = await sqliteConnection();
+
+    const user = await database.get("SELECT * FROM users WHERE id = (?)" , [id]);
+
+    if(!user){
+        throw new AppError("This user doesn't exist");
+
+    }
+
+    const userWithUpdateEmail = await database.get("SELECT * FROM users WHERE email = (?)" , [email]);
+
+    if(userWithUpdateEmail && userWithUpdateEmail.id !== user.id){
+        throw new AppError("This e-mail already exist");
+    }
+
+    user.name = name ?? user.name
+    user.email = email ?? user.email
+
+    if(password && !old_password){
+        throw new AppError("You need to inform your previous password to change")
+    }
+
+    if(password && old_password){
+        const checkOldPassword = await compare(old_password , user.password);
+
+        if(!checkOldPassword){
+            throw new AppError("The old password doesn't match")
+        };
+
+        user.password = await hash(password , 8);
+    }
+
+    database.run(`
+    UPDATE users SET
+    name = ?,
+    email = ?,
+    password = ?,
+    updated_at = DATETIME ('now')
+    WHERE id = ? 
+    ` , [ name , email ,user.password , id] );
+
+    return response.json();
+
+};
 
 
 }

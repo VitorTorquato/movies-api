@@ -4,13 +4,13 @@ const database = require('./database/sqlite')
 
 const express = require('express');
 
-
+const migrationsRun = require('./database/sqlite/migrations')
 
 const app = express();
 
 app.use(express.json());
 
-database();
+migrationsRun();
 
 const routes = require('./routes');
 
