@@ -19,7 +19,9 @@ class NotesController{
             user_id
         });
 
-
+        if(rating < 0 && rating > 5){
+            throw new AppError('A nota só pode ser de 0 a 5')
+        }
 
        
 
