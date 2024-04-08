@@ -64,7 +64,9 @@ class NotesController{
     }
 
     async index(request , response){
-        const{ title , user_id , tags } = request.query;
+        const{ title , tags } = request.query;
+
+        const  user_id = request.user.id
 
         let notes
 
@@ -76,7 +78,7 @@ class NotesController{
             notes = await knex(movie_notes).where({user_id}).whereILike("title" , `%${title}%`).orderBy("title");
         }
 
-        const userTags = await kenex('tags').where({user_id});
+        const userTags = await knex('tags').where({user_id});
         const notesWithTags = notes.map(note => {
             const noteTags = userTags.filter(tag => tag.note_id === note.id);
 

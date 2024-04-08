@@ -22,6 +22,7 @@ class SessionControllers{
         }
 
         const passwordIsTheSame = await compare(password , user.password);
+        
         if(!passwordIsTheSame){
             throw new AppError('E-mail e/ou senha invalida' , 401);
         }
