@@ -19,7 +19,7 @@ class NotesController{
             user_id
         });
 
-        if(rating < 0 && rating > 5){
+        if(rating < 0 || rating > 5){
             throw new AppError('A nota só pode ser de 0 a 5')
         }
 
@@ -73,9 +73,23 @@ class NotesController{
         if(tags){
             const filterTags = tags.split(",").map(tag => tag.trim());
 
-            notes = await knex('tags').whereIn("name" , filterTags);
+            notes = await knex('tags')
+            .select([
+                "notes.id",
+                "notes.title",
+                "notes.user_id"
+            ])
+            .where("notes.user_id" , user_id)
+            .whereLike("notes.title" , `%${title}%`)
+            .whereIn('name' , filterTags)
+            .innerJoin("notes" , "notes.id" ,"tags.note_id")
+            .groupBy("notes.id")
+            .orderBy("notes.title")
         }else{
-            notes = await knex(movie_notes).where({user_id}).whereILike("title" , `%${title}%`).orderBy("title");
+            notes = await knex("movie_notes")
+            .where({user_id})
+            .whereILike("title" , `%${title}%`)
+            .orderBy("title");
         }
 
         const userTags = await knex('tags').where({user_id});
