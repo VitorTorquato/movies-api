@@ -15,6 +15,8 @@ function ensureAuthenticated(request , response , next){
         }
 
         const [, token ] = authHeader.split(" ")
+
+       
         
         try{
             const { sub: user_id} = verify(token , authConfig.jwt.secret)
